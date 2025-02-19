@@ -1,6 +1,5 @@
 Here's a README.md for your web scraping project:
 
-```markdown:/Users/imhayatunnabi/Herd/playwright-task/README.md
 # Web Scraping with Playwright
 
 This project demonstrates automated web scraping using Playwright for multiple websites including GitHub repositories and PHP function statistics.

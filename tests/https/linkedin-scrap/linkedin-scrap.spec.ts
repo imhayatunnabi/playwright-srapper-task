@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, BrowserContextOptions } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import dotenv from 'dotenv';
@@ -18,18 +18,57 @@ interface Conversation {
 
 test.setTimeout(120000);
 
-test('LinkedIn Login and Save Session', async ({ page, context }) => {
-  await page.goto('https://www.linkedin.com');
-  await page.click('[data-test-id="home-hero-sign-in-cta"]');
-  await expect(page).toHaveURL('https://www.linkedin.com/login');
+test('LinkedIn Login and Save Session', async ({ browser }) => {
+  const cookiesPath = path.join(__dirname, 'linkedIn-session', 'cookies.json');
+  const storageStatePath = path.join(__dirname, 'linkedIn-session', 'storage-state.json');
 
-  await page.fill('#username', process.env.LINKEDIN_EMAIL || '');
-  await page.fill('#password', process.env.LINKEDIN_PASSWORD || '');
-  await page.click('button[type="submit"]');
+  let sessionValid = false;
+  let contextOptions: BrowserContextOptions = {};
 
-  await page.waitForURL('https://www.linkedin.com/feed/');
+  if (fs.existsSync(storageStatePath)) {
+    contextOptions.storageState = storageStatePath;
+  }
 
-  await page.waitForSelector('a[href="https://www.linkedin.com/messaging/?"]');
+  const context = await browser.newContext(contextOptions);
+  const page = await context.newPage();
+
+  try {
+    // Check if session is still valid
+    await page.goto('https://www.linkedin.com/feed/');
+    await page.waitForSelector('a[href="https://www.linkedin.com/messaging/?"]', { timeout: 10000 });
+    sessionValid = true;
+  } catch (error) {
+    console.log('Stored session is not valid, logging in again.');
+  }
+
+  if (!sessionValid) {
+    await page.goto('https://www.linkedin.com');
+    await page.click('[data-test-id="home-hero-sign-in-cta"]');
+    await expect(page).toHaveURL('https://www.linkedin.com/login');
+
+    await page.fill('#username', process.env.LINKEDIN_EMAIL || '');
+    await page.fill('#password', process.env.LINKEDIN_PASSWORD || '');
+    await page.click('button[type="submit"]');
+
+    await page.waitForURL('https://www.linkedin.com/feed/');
+
+    // Save new session data
+    const storageState = await context.storageState();
+
+    const sessionPath = path.join(__dirname, 'linkedIn-session');
+
+    if (!fs.existsSync(sessionPath)) {
+      fs.mkdirSync(sessionPath);
+    }
+
+    fs.writeFileSync(
+      path.join(sessionPath, 'storage-state.json'),
+      JSON.stringify(storageState, null, 2)
+    );
+
+    console.log('New session data saved successfully!');
+  }
+
   await page.click('a[href="https://www.linkedin.com/messaging/?"]', { timeout: 60000 });
 
   const conversationSelector = 'li.msg-conversation-listitem';

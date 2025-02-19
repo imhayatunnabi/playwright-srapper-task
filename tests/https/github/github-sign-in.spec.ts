@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test('GitHub Sign In', async ({ page }) => {
   await page.goto('https://github.com/login');
-  await page.fill('input[name="login"]', 'imhayatunnabi');
-  await page.fill('input[name="password"]', process.env.GITHUB_PASSWORD || 'NabilSSH54#@!');
+  await page.fill('input[name="login"]', '*********');
+  await page.fill('input[name="password"]', process.env.GITHUB_PASSWORD || '********#@!');
   await page.click('input[type="submit"]');
 
   await page.waitForURL('https://github.com/sessions/two-factor/app');
@@ -17,10 +17,10 @@ test('GitHub Sign In', async ({ page }) => {
   ]);
 
   await page.click('.AppHeader-user');
-  await page.waitForSelector('a[href="/imhayatunnabi"]');
-  await page.click('a[href="/imhayatunnabi"]');
+  await page.waitForSelector('a[href="/*********"]');
+  await page.click('a[href="/*********"]');
 
-  await page.waitForURL('https://github.com/imhayatunnabi');
+  await page.waitForURL('https://github.com/*********');
 
   const profileNameElement = await page.locator('.p-nickname.vcard-username').first();
   const profileName = await profileNameElement.evaluate(el => {
@@ -28,5 +28,5 @@ test('GitHub Sign In', async ({ page }) => {
   });
   console.log('Profile Name:', profileName);
 
-  expect(profileName?.toLowerCase()).toBe('imhayatunnabi');
+  expect(profileName?.toLowerCase()).toBe('*********');
 });

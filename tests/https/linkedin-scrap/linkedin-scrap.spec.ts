@@ -26,7 +26,16 @@ test('LinkedIn Login and Save Session', async ({ browser }) => {
   let contextOptions: BrowserContextOptions = {};
 
   if (fs.existsSync(storageStatePath)) {
-    contextOptions.storageState = storageStatePath;
+    try {
+      const storageStateContent = fs.readFileSync(storageStatePath, 'utf-8');
+      if (storageStateContent.trim()) {
+        contextOptions.storageState = storageStatePath;
+      } else {
+        console.log('Storage state file is empty, proceeding without it.');
+      }
+    } catch (error) {
+      console.log('Error reading storage state file:', error);
+    }
   }
 
   const context = await browser.newContext(contextOptions);

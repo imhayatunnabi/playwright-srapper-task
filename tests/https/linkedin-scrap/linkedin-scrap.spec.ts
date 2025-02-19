@@ -5,6 +5,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+interface Message {
+  sender: string;
+  text: string;
+  timestamp: string;
+}
+
+interface Conversation {
+  personName: string;
+  messages: Message[];
+}
+
 test('LinkedIn Login and Save Session', async ({ page, context }) => {
   await page.goto('https://www.linkedin.com');
   await page.click('[data-test-id="home-hero-sign-in-cta"]');
@@ -16,7 +27,24 @@ test('LinkedIn Login and Save Session', async ({ page, context }) => {
 
   await page.waitForURL('https://www.linkedin.com/feed/');
 
+  // Click on messaging button and wait for navigation
+  await page.waitForSelector('a[href="https://www.linkedin.com/messaging/?"]');
+  await page.click('a[href="https://www.linkedin.com/messaging/?"]', { timeout: 60000 });
 
+  
+  const conversationSelector = 'li.msg-conversation-listitem';
+  await page.waitForSelector(conversationSelector);
+  
+  const conversations = await page.$$(conversationSelector);
+  console.log(`Found ${conversations.length} conversations`);
+
+  // Click through each conversation
+  for (const conversation of conversations) {
+    await conversation.click();
+    await page.waitForTimeout(1000);
+  }
+
+  // Continue with session saving code...
   const cookies = await context.cookies();
   const storageState = await context.storageState();
 
